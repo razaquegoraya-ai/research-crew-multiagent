@@ -14,10 +14,14 @@ responsive.
 
 from __future__ import annotations
 
+import json
 import logging
+import re
+from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, status
 from fastapi.concurrency import run_in_threadpool
+from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
 
 from research_crew.config import get_settings
@@ -26,6 +30,10 @@ from research_crew.logging_config import configure_logging
 from research_crew.models.schemas import ResearchRequest, ResearchResponse
 
 logger = logging.getLogger("research_crew.api")
+
+# Directory holding the single-page UI (research_crew/web/index.html).
+_WEB_DIR = Path(__file__).resolve().parent.parent / "web"
+_URL_RE = re.compile(r"https?://[^\s)\]>\"']+")
 
 
 class HealthResponse(BaseModel):
@@ -55,6 +63,64 @@ def create_app() -> FastAPI:
             "trace saved alongside each run."
         ),
     )
+
+    @app.get("/", include_in_schema=False)
+    async def index() -> FileResponse:
+        """Serve the single-page dashboard UI."""
+        index_file = _WEB_DIR / "index.html"
+        if not index_file.exists():  # pragma: no cover - packaging guard
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="UI not found. Expected research_crew/web/index.html.",
+            )
+        return FileResponse(index_file, media_type="text/html")
+
+    @app.get("/api/sample", tags=["ops"], include_in_schema=True)
+    async def sample() -> JSONResponse:
+        """Return the committed sample report + trace for a no-key demo.
+
+        Lets the UI showcase a full run (report, metadata, trace timeline,
+        sources) without any API keys or a live crew run. Sources are parsed
+        from the report markdown so the count is real.
+        """
+        output_dir = Path(settings.output_dir)
+        reports = sorted(output_dir.glob("*_sample.md"))
+        traces = sorted(output_dir.glob("*_sample.json"))
+        if not reports or not traces:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No committed sample files found in the output directory.",
+            )
+
+        report_md = reports[0].read_text(encoding="utf-8")
+        trace_data = json.loads(traces[0].read_text(encoding="utf-8"))
+
+        # Extract unique source URLs from the report body for the demo.
+        seen: list[str] = []
+        for url in _URL_RE.findall(report_md):
+            cleaned = url.rstrip(".,")
+            if cleaned not in seen:
+                seen.append(cleaned)
+        sources = [{"url": u, "title": "", "snippet": ""} for u in seen]
+
+        return JSONResponse(
+            {
+                "report_markdown": report_md,
+                "metadata": {
+                    "topic": "The competitive landscape for AI code assistants in 2026",
+                    "depth": "deep",
+                    "model": settings.openai_model,
+                    "agents_used": trace_data.get("agents_used", []),
+                    "sub_questions_count": 5,
+                    "sources_count": len(sources),
+                    "elapsed_seconds": trace_data.get("elapsed_seconds", 0.0),
+                    "trace_event_count": trace_data.get("event_count", 0),
+                    "is_sample": True,
+                },
+                "sources": sources,
+                "trace": trace_data.get("events", []),
+            }
+        )
 
     @app.get("/health", response_model=HealthResponse, tags=["ops"])
     async def health() -> HealthResponse:

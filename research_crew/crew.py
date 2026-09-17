@@ -117,6 +117,7 @@ class ResearchCrew:
             report_markdown=report_markdown,
             metadata=metadata,
             sources=collector.all(),
+            trace=tracer.events,
         )
 
     # -- internals -----------------------------------------------------------

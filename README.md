@@ -84,7 +84,8 @@ research-crew/
 │   ├── tasks/crew_tasks.py       # the task graph incl. the review step
 │   ├── tools/search_tool.py      # Tavily tool + SourceCollector
 │   ├── tracing/tracer.py         # ⭐ first-class hand-off tracer
-│   └── api/app.py                # FastAPI application
+│   ├── api/app.py                # FastAPI application (+ serves the UI)
+│   └── web/index.html           # single-page dashboard UI
 └── tests/test_smoke.py           # offline tests (no API keys needed)
 ```
 
@@ -186,6 +187,21 @@ curl -s -X POST http://localhost:8000/research \
 ```
 
 Interactive API docs are at `http://localhost:8000/docs`.
+
+### Web dashboard
+
+Once the API is running, open **`http://localhost:8000/`** for the built-in
+single-page dashboard (no build step, served by FastAPI):
+
+- Enter a topic, pick **quick**/**deep**, and hit **Run research** to call the
+  live API.
+- Or click **Load sample run** to explore a full result instantly — no API
+  keys required — using the committed sample data via `GET /api/sample`.
+- Results render as three tabs: the **Report** (rendered markdown), the
+  **Agent trace** (a color-coded, expandable hand-off timeline with per-event
+  timing — the visual proof of orchestration), and **Sources**.
+
+The UI lives in [`research_crew/web/index.html`](research_crew/web/index.html).
 
 ---
 

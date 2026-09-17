@@ -131,3 +131,7 @@ class ResearchResponse(BaseModel):
     sources: list[Source] = Field(
         default_factory=list, description="De-duplicated sources cited."
     )
+    trace: list[TraceEvent] = Field(
+        default_factory=list,
+        description="Ordered orchestration trace (agent hand-offs & tool calls).",
+    )
