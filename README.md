@@ -264,4 +264,4 @@ Depth also tunes behavior: `quick` → 3 sub-questions, `deep` → 5.
 
 ## License
 
-Provided as a portfolio sample. Add a license of your choice before distributing.
+Released under the [MIT License](LICENSE) © 2026 Abdul Razaque Goraya.
