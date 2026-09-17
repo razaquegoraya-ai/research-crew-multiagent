@@ -1,0 +1,26 @@
+# research-crew — pinned dependencies
+# Known-good baseline. If your environment resolves conflicts, bump within the
+# same minor line first (CrewAI moves fast). Python 3.11+ required.
+
+# --- Agent orchestration ---
+crewai==0.100.0
+crewai-tools==0.33.0
+
+# --- LLM provider ---
+openai==1.59.6
+
+# --- Web search tool ---
+tavily-python==0.5.0
+
+# --- API layer ---
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+
+# --- Data models & config ---
+pydantic==2.10.4
+pydantic-settings==2.7.1
+python-dotenv==1.0.1
+
+# --- Dev / test ---
+pytest==8.3.4
+httpx==0.28.1
